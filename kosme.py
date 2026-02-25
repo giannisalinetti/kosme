@@ -27,24 +27,30 @@ def get_vmi_metadata(export_format, output_file):
         vmis = custom_api.list_cluster_custom_object(group, version, plural)
         
         for vmi in vmis.get('items', []):
-            name = vmi['metadata']['name']
-            namespace = vmi['metadata']['namespace']
-            
-            # Extract OS info from the .status field populated by Guest Agent
+            metadata = vmi.get('metadata', {})
+            name = metadata.get('name')
+            namespace = metadata.get('namespace')
+
+            if not name or not namespace:
+                print(f"Warning: Skipping VMI with missing metadata (name={name}, namespace={namespace})")
+                continue
+
             status = vmi.get('status', {})
             guest_info = status.get('guestOSInfo', {})
-            
-            # Check for Agent connectivity via conditions
+
             conditions = status.get('conditions', [])
-            agent_ready = any(c.get('type') == 'AgentConnected' and c.get('status') == 'True' for c in conditions)
-            
+            agent_ready = any(
+                c.get('type') == 'AgentConnected' and c.get('status') == 'True'
+                for c in conditions
+            )
+
             row = {
                 "Namespace": namespace,
                 "VM_Name": name,
                 "OS_Name": guest_info.get("name", "N/A"),
                 "OS_Version": guest_info.get("version", "N/A"),
                 "Kernel": guest_info.get("kernelRelease", "N/A"),
-                "Agent_Connected": "Connected" if agent_ready else "Disconnected"
+                "Agent_Connected": "Connected" if agent_ready else "Disconnected",
             }
             data_list.append(row)
 
