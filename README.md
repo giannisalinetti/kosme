@@ -52,6 +52,26 @@ Export VMI metadata as Markdown:
 python kosme.py -f md -o vmi_inventory.md
 ```
 
+## Container Usage
+
+Build the container image:
+```bash
+podman build -t kosme .
+```
+
+Export to stdout and redirect on the host:
+```bash
+podman run --rm -v ~/.kube:/home/default/.kube:ro kosme -f csv -o /dev/stdout > vmi_report.csv
+```
+
+Export to a mounted host directory:
+```bash
+podman run --rm \
+  -v ~/.kube:/home/default/.kube:ro \
+  -v ./output:/app/output:Z \
+  kosme -f csv -o output/vmi_report.csv
+```
+
 ## Output Columns
 
 The exported data includes the following columns:
